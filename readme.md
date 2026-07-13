@@ -1,187 +1,110 @@
-# Edge-IIoT SmartNIC Deployment Strategy
+# Defense-Oriented Machine Learning for Edge-IIoT Intrusion Detection
 
-**Version:** 1.0 (Draft)
-
-**Author:** Sharon Gumina
+> **A deployment-oriented framework for developing, evaluating, and operationalizing machine learning-based intrusion detection for Edge-IIoT environments.**
 
 ---
 
-# 1. Purpose
+## Overview
 
-This document defines the engineering strategy for deploying machine learning
-models for Edge-IIoT intrusion detection from research prototypes into an
-efficient SmartNIC-compatible runtime.
+The objective of this project is to develop a reproducible, deployment-oriented workflow that transforms raw network traffic into portable defensive intelligence capable of executing efficiently in operational environments.
 
-Rather than treating feature engineering, model training, and deployment as
-independent activities, this project defines a single deployment-oriented
-feature contract that remains fixed throughout the entire machine learning
-pipeline.
-
-The objective is to create a reproducible workflow where the same feature
-definitions are used during:
-
-- PCAP processing
-- Dataset generation
-- Model training
-- Model evaluation
-- ONNX export
-- SmartNIC inference
-
-This eliminates inconsistencies between offline experimentation and production
-deployment while simplifying long-term maintenance.
+This repository documents the complete research workflow from packet capture through SmartNIC-compatible deployment.
 
 ---
 
-# 2. Design Philosophy
+## Research Objectives
 
-Therefore this project adopts a deployment-first philosophy.
+The project investigates several related research questions:
 
-Each feature must satisfy multiple requirements:
+- How should defensive observations be extracted from network traffic to support operational intrusion detection?
+- How do packet aggregation windows influence intrusion detection performance?
+- How can Multi-Layer Perceptron (MLP) models be optimized for deployment in constrained Edge-IIoT environments?
+- How can ONNX provide a portable representation of trained machine learning models?
+- How can SmartNIC-compatible inference support operational cyber defense?
 
-- Predictive usefulness
-- Low computational cost
-- Runtime stability
-- Ease of implementation
-- Reproducibility
-- Compatibility with ONNX inference
-- Compatibility with C implementations
+Rather than optimizing solely for classification accuracy, this work emphasizes reproducibility, deployment readiness, and operational fidelity.
 
 ---
 
-# 3. System Architecture
+## Technical Approach
 
-The complete workflow is illustrated below.
+The proposed workflow consists of six major stages.
 
+```
+               PCAP Files
+                    │
+                    ▼
+          Packet Processing
+                    │
+                    ▼
+         Window Aggregation
+                    │
+                    ▼
+ Defensive Observation Extraction
+                    │
+                    ▼
+         Dataset Generation
+                    │
+                    ▼
+           MLP Training
+                    │
+                    ▼
+          Model Evaluation
+                    │
+                    ▼
+            skl2onnx Export
+                    │
+                    ▼
+              ONNX Model
+                    │
+                    ▼
+      SmartNIC-Compatible Runtime
+                    │
+                    ▼
+      Intrusion Detection Decision
+```
 
-The feature contract is intentionally placed at the center of the architecture.
-
-Every component consumes the same feature definitions.
-
-                Edge-IIoT Dataset
-                       │
-                  PCAP Files
-                       │
-             Scapy Feature Extraction
-                       │
-              Feature Contract v1.0
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-   Train MLP                    Evaluate Model
-        │
-   scikit-learn MLP
-        │
-      skl2onnx
-        │
-     Edge-IIoT.onnx
-        │
-──────────────────────────────────────────────
-        Sergio's Runtime
-──────────────────────────────────────────────
-        │
-   ONNX Runtime
-        │
-    SmartNIC / C Inference
-        │
- Intrusion Detection Decision
----
-
-# 4. The Feature Contract
-
-The feature contract is the most important component of the system.
-
-It defines:
-
-- feature names
-- ordering
-- data types
-- computation methods
-- expected ranges
-- deployment cost
-
-Every model must consume features in exactly this order.
-
-Changing feature order invalidates all trained models.
+Each stage is designed to preserve the defensive observations used during experimentation while supporting efficient operational deployment.
 
 ---
 
-## Version 1.0 Proposed Features
+## Defensive Observations
 
-| Feature | Purpose | Runtime Cost | Status |
-|----------|----------|--------------|--------|
-| total_bytes | Total bytes observed in window | Low | Required |
-| avg_pkt_size | Mean packet size | Low | Required |
-| duration | Window duration | Low | Required |
-| total_pkts | Number of packets | Low | Required |
-| mean_iat | Mean inter-arrival time | Medium | Required |
-| pkts_per_sec | Packet rate | Low | Required |
-| ack_count | TCP ACK counter | Low | Required |
-| orig_bytes | Source bytes | Low | Required |
-| burstiness_cv | Burstiness coefficient of variation | Medium | Candidate |
-| max_pkt_size | Largest packet observed | Low | Candidate |
+Intrusion detection begins with observable characteristics of network behavior rather than with machine learning itself.
 
----
+The project evaluates deployment-oriented defensive observations such as:
 
-# 5. Why These Features?
+| Observation | Defensive Purpose |
+|------------|-------------------|
+| Total Bytes | Communication volume |
+| Packet Count | Traffic intensity |
+| Average Packet Size | Payload characteristics |
+| Duration | Session persistence |
+| Mean Inter-arrival Time | Timing behavior |
+| Packet Rate | Burst activity |
+| TCP ACK Count | Transport protocol behavior |
+| Source Bytes | Endpoint communication behavior |
+| Burstiness | Traffic volatility |
+| Maximum Packet Size | Communication characteristics |
 
-Feature selection is based on multiple criteria rather than importance scores
-alone.
+These observations represent the initial candidate observation set.
 
-Each feature is evaluated according to
+As the research progresses, observations may be refined based on:
 
-- Random Forest importance
-- MLP importance
-- Runtime computational cost
-- Existing implementation availability
-- Deployment complexity
-- Long-term maintainability
+- detection effectiveness
+- computational cost
+- deployment feasibility
+- operational reproducibility
 
-The goal is to maximize deployment efficiency rather than maximizing benchmark
-accuracy alone.
+A formal **Defensive Observation Specification** will document the current version of the observation set.
 
 ---
 
-# 6. Feature Stability
+## Packet Window Evaluation
 
-Once Version 1.0 of the feature contract is finalized:
+The project evaluates multiple packet aggregation windows while maintaining a consistent observation methodology.
 
-No feature additions are permitted.
-
-No feature deletions are permitted.
-
-No feature reordering is permitted.
-
-Any modification requires a new contract version.
-
-Example
-
-Feature Contract v1.0
-
-↓
-
-All trained models
-
-↓
-
-ONNX exports
-
-↓
-
-SmartNIC runtime
-
-Future work becomes
-
-Feature Contract v2.0
-
-instead of modifying v1.0.
-
----
-
-# 7. Window Sizes
-
-This project evaluates multiple temporal aggregation windows.
-
-Current planned windows:
+Current planned window sizes include:
 
 - 4 packets
 - 8 packets
@@ -189,252 +112,219 @@ Current planned windows:
 - 32 packets
 - 64 packets
 
-Importantly:
-
-The feature vector never changes.
-
-Only the aggregation window changes.
-
-This allows a direct comparison between temporal resolutions while keeping the
-learning problem identical.
+Maintaining comparable observations across window sizes allows the effect of temporal aggregation to be evaluated independently of observation engineering.
 
 ---
 
-# 8. Model Training Strategy
+## Why Multi-Layer Perceptrons?
 
-Each window size receives an independently trained MLP.
+MLPs were selected as the initial deployment model because they provide an effective balance between:
 
-Example
+- detection capability
+- computational efficiency
+- memory requirements
+- deterministic inference
+- compatibility with ONNX Runtime
 
-Window 4
-
-↓
-
-Feature Contract v1.0
-
-↓
-
-MLP
-
-↓
-
-edgeiiot_window4.onnx
-
-Window 8
-
-↓
-
-Feature Contract v1.0
-
-↓
-
-MLP
-
-↓
-
-edgeiiot_window8.onnx
-
-...
-
-Window 64
-
-↓
-
-Feature Contract v1.0
-
-↓
-
-MLP
-
-↓
-
-edgeiiot_window64.onnx
-
-This produces a family of comparable models.
+Although future work may investigate additional models, the initial implementation focuses on MLPs to establish a reproducible deployment pipeline.
 
 ---
 
-# 9. Repository Organization
+## ONNX-Based Deployment
 
-Recommended repository structure
+Rather than coupling machine learning models directly to Python implementations, trained models are exported using the Open Neural Network Exchange (ONNX) format.
+
+The deployment workflow is therefore:
 
 ```
-edge-iiot/
+Python
+
+    │
+
+Scapy
+
+    │
+
+Observation Extraction
+
+    │
+
+scikit-learn MLP
+
+    │
+
+skl2onnx
+
+    │
+
+ONNX Model
+
+    │
+
+ONNX Runtime
+
+    │
+
+C Runtime
+
+    │
+
+SmartNIC Deployment
+```
+
+Separating model development from model execution provides a portable deployment strategy while enabling future hardware-specific optimizations.
+
+---
+
+## Repository Organization
+
+```
+Edge-IIoT-Defense/
 
 │
 
-├── data/
-
-├── datasets/
+├── README.md
 
 ├── docs/
 
-│      EDGE_IIOT_DEPLOYMENT_STRATEGY.md
-
-│      FEATURE_CONTRACT.md
-
-│      MODEL_CARD_TEMPLATE.md
-
-│
-
-├── edgeiiot/
-
-│      feature_contract.py
-
-│      features.py
-
-│      windows.py
-
-│      preprocessing.py
-
-│      train.py
-
-│      evaluate.py
-
-│      export_onnx.py
-
-│
+├── data/
 
 ├── models/
 
-│      window4/
-
-│      window8/
-
-│      window16/
-
-│      window32/
-
-│      window64/
-
-│
-
-├── onnx/
+├── notebooks/
 
 ├── runtime/
+
+├── scripts/
+
+├── src/
 
 └── tests/
 ```
 
----
+### Repository Structure
 
-# 10. Deployment Strategy
-
-Deployment consists of four stages.
-
-Stage 1
-
-Extract deployment features from packet windows.
-
-Stage 2
-
-Normalize features using training parameters.
-
-Stage 3
-
-Execute ONNX inference.
-
-Stage 4
-
-Return predicted attack class.
-
-The deployment runtime should never compute features not included in the
-feature contract.
+| Directory | Purpose |
+|-----------|---------|
+| docs | Research methodology, architecture, and technical documentation |
+| data | Dataset organization and preprocessing outputs |
+| src | Core Python implementation |
+| scripts | Processing and training entry points |
+| models | Trained models, ONNX exports, and evaluation artifacts |
+| runtime | C runtime, ONNX Runtime integration, and SmartNIC implementation |
+| notebooks | Exploratory analysis |
+| tests | Unit and integration testing |
 
 ---
 
-# 11. Future SmartNIC Integration
+## Documentation
 
-The long-term deployment target is a SmartNIC-compatible runtime.
+Project documentation will evolve alongside the implementation.
 
-The runtime is expected to perform:
+Planned documentation includes:
 
-Packet Reception
-
-↓
-
-Window Aggregation
-
-↓
-
-Feature Extraction
-
-↓
-
-Feature Normalization
-
-↓
-
-MLP Inference
-
-↓
-
-Detection Output
-
-Because every feature has already been selected with deployment cost in mind,
-the SmartNIC implementation can remain lightweight.
+- Defense-Oriented Strategy
+- System Architecture
+- Defensive Observation Specification
+- Experimental Methodology
+- Dataset Preparation
+- Model Training
+- ONNX Deployment
+- SmartNIC Runtime
 
 ---
 
-# 12. Research Contributions
+## Technology Stack
 
-The proposed framework contributes more than a trained classifier.
+### Machine Learning
 
-It introduces a deployment-oriented methodology for Edge-IIoT intrusion
-detection by:
+- Python
+- scikit-learn
+- NumPy
+- Pandas
 
-- defining a stable deployment feature contract;
-- integrating feature engineering with deployment constraints;
-- evaluating multiple temporal aggregation windows using a fixed feature space;
-- exporting interoperable ONNX models; and
-- enabling SmartNIC-compatible inference using a common runtime architecture.
+### Network Processing
 
-This approach bridges the gap between machine learning experimentation and
-real-world deployment by treating feature definition as a versioned interface
-rather than a temporary artifact of model development.
+- Scapy
+- PCAP datasets
 
----
+### Deployment
 
-# 13. Development Roadmap
+- ONNX
+- skl2onnx
+- ONNX Runtime
 
-Phase 1
+### Runtime
 
-✔ Finalize Feature Contract v1.0
-
-Phase 2
-
-✔ Implement feature extraction
-
-Phase 3
-
-✔ Train MLPs for each window size
-
-Phase 4
-
-✔ Evaluate performance
-
-Phase 5
-
-✔ Export ONNX models
-
-Phase 6
-
-✔ Integrate with SmartNIC runtime
-
-Phase 7
-
-✔ Performance benchmarking
-
-Phase 8
-
-✔ Evaluation
+- C/C++
+- SmartNIC-compatible inference
 
 ---
 
-# 14. Guiding Principle
+## Current Development Roadmap
 
-The central design principle of this project is:
+### Phase 1 — Research Framework
 
-> **Models may change. Window sizes may change. Hyperparameters may change. Deployment targets may change. The Feature Contract does not.**
+- Repository organization
+- System architecture
+- Defensive observation design
+- Experimental methodology
 
-The feature contract serves as the stable interface between research and deployment, ensuring reproducibility, maintainability, and interoperability across the entire Edge-IIoT machine learning pipeline.
+### Phase 2 — Data Processing
+
+- PCAP processing
+- Observation extraction
+- Dataset generation
+- Data validation
+
+### Phase 3 — Model Development
+
+- Train MLP models
+- Evaluate packet window strategies
+- Hyperparameter optimization
+
+### Phase 4 — Deployment
+
+- Export ONNX models
+- Validate ONNX inference
+- Runtime integration
+
+### Phase 5 — Operational Evaluation
+
+- SmartNIC-compatible deployment
+- Runtime benchmarking
+- Detection performance evaluation
+
+---
+
+## Long-Term Vision
+
+The long-term goal of this research is to establish a reproducible methodology for transitioning machine learning-based intrusion detection from laboratory experimentation to operational cyber defense.
+
+The framework seeks to preserve defensive observations throughout the complete machine learning lifecycle while supporting portable model deployment and efficient runtime execution in Edge-IIoT environments.
+
+---
+
+## Project Status
+
+**Current Status:** Research framework and architecture development.
+
+Upcoming milestones include:
+
+- Finalize the Defensive Observation Specification
+- Process Edge-IIoT PCAP datasets
+- Train baseline MLP models
+- Export ONNX models
+- Integrate with the SmartNIC-compatible runtime
+
+---
+
+## Citation
+
+Citation information will be added upon publication.
+
+---
+
+## License
+
+License information will be added prior to public release.
