@@ -52,47 +52,38 @@ Each feature must satisfy multiple requirements:
 
 The complete workflow is illustrated below.
 
-                    +----------------+
-                    |     PCAP       |
-                    +----------------+
-                            |
-                            |
-                    Packet Processing
-                            |
-                            |
-                    +----------------+
-                    | Window Builder |
-                    +----------------+
-                            |
-                            |
-                    Feature Extraction
-                            |
-                            |
-              +-----------------------------+
-              | Edge-IIoT Feature Contract  |
-              +-----------------------------+
-                            |
-           -----------------------------------------
-           |                  |                    |
-           |                  |                    |
-      Training           Validation           Statistics
-           |                  |                    |
-           -----------------------------------------
-                            |
-                      Trained MLP
-                            |
-                     skl2onnx Export
-                            |
-                     ONNX Model File
-                            |
-                  SmartNIC C Inference
-                            |
-                    Detection Decision
 
 The feature contract is intentionally placed at the center of the architecture.
 
 Every component consumes the same feature definitions.
 
+                Edge-IIoT Dataset
+                       │
+                  PCAP Files
+                       │
+             Scapy Feature Extraction
+                       │
+              Feature Contract v1.0
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+   Train MLP                    Evaluate Model
+        │
+   scikit-learn MLP
+        │
+      skl2onnx
+        │
+     Edge-IIoT.onnx
+        │
+──────────────────────────────────────────────
+        Sergio's Runtime
+──────────────────────────────────────────────
+        │
+   ONNX Runtime
+        │
+    SmartNIC / C Inference
+        │
+ Intrusion Detection Decision
 ---
 
 # 4. The Feature Contract
