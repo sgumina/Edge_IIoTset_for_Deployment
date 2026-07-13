@@ -34,20 +34,6 @@ deployment while simplifying long-term maintenance.
 
 # 2. Design Philosophy
 
-Traditional machine learning projects often follow this workflow:
-
-PCAP
-→ Feature Engineering
-→ Feature Selection
-→ Train Model
-→ Export Model
-
-The drawback of this approach is that feature selection is driven solely by
-statistical importance.
-
-In deployment environments, especially SmartNICs and embedded inference
-engines, feature computation cost is equally important.
-
 Therefore this project adopts a deployment-first philosophy.
 
 Each feature must satisfy multiple requirements:
@@ -450,7 +436,7 @@ Phase 7
 
 Phase 8
 
-✔ Dissertation evaluation
+✔ Evaluation
 
 ---
 
